@@ -87,10 +87,7 @@ function ldapValueEscape(string $value): string
     );
 }
 
-/**
- * @return resource|\LDAP\Connection
- */
-function ldapConnection()
+function ldapConnection(): \LDAP\Connection
 {
     $connection = ldap_connect(LDAP_HOST);
 

@@ -85,9 +85,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $typ = 'arbeit';
             }
 
-            $stundenRoh = str_replace(',', '.', (string) ($_POST[$tag . '_stunden'] ?? '8'));
-            $stunden = is_numeric($stundenRoh) ? (float) $stundenRoh : 0.0;
-            $stunden = normalizeTagesStunden($typ, $stunden);
+            $stundenH = max(0, min(23, (int) ($_POST[$tag . '_stunden_h'] ?? 7)));
+            $stundenM = max(0, min(59, (int) ($_POST[$tag . '_stunden_m'] ?? 58)));
+            $stunden = normalizeTagesStunden($typ, hmToFloat($stundenH, $stundenM));
 
             // Bei Urlaub/Krank/Feiertag ergeben Tätigkeiten keinen Sinn,
             // werden aber falls vorhanden trotzdem als Bemerkung übernommen.
@@ -438,8 +438,8 @@ function typVorbelegung(?array $aktuellerBericht, ?array $vorwochenBericht, stri
                                     <span class="week-list-kw">KW <?= (int) $woche['kw'] ?> / <?= (int) $woche['jahr'] ?></span>
                                     <span
                                         class="status-badge <?= statusBadgeClass($woche['status']) ?>"><?= e($woche['status']) ?></span>
-                                    <span class="week-list-hours"><?= number_format(sumStunden($woche), 1, ',', '.') ?>
-                                        Std.</span>
+                                    <?php [$wH, $wM] = floatToHM(sumStunden($woche)); ?>
+                                    <span class="week-list-hours"><?= e("{$wH}:{$wM} h") ?></span>
                                 </a>
                             </li>
                         <?php endforeach; ?>
@@ -517,8 +517,9 @@ function typVorbelegung(?array $aktuellerBericht, ?array $vorwochenBericht, stri
                         <?php foreach (WOCHENTAGE as $tag):
                             $datum = $weekRange['montag']->modify('+' . array_search($tag, WOCHENTAGE) . ' days');
                             $typ = typVorbelegung($aktuellerBericht, $vorwochenBericht, $tag, $festeSchultagListe);
-                            $stundenDefault = $typ === 'schule' ? SCHULE_STUNDEN : 0;
-                            $stunden = feldWert($aktuellerBericht, $tag, 'stunden', $stundenDefault);
+                            $stundenDefault = $typ === 'schule' ? SCHULE_STUNDEN : TAGES_SOLLZEIT;
+                            $stunden = (float) feldWert($aktuellerBericht, $tag, 'stunden', $stundenDefault);
+                            [$stundenH, $stundenM] = floatToHM($stunden);
                             $taetigkeiten = feldWert($aktuellerBericht, $tag, 'taetigkeiten', '');
                             ?>
                             <fieldset class="day-block" <?= $istGesperrt ? 'disabled' : '' ?>>
@@ -537,8 +538,13 @@ function typVorbelegung(?array $aktuellerBericht, ?array $vorwochenBericht, stri
                                     </label>
                                     <label class="inline-label">
                                         <span>Stunden</span>
-                                        <input type="number" step="0.01" min="0" max="24" name="<?= $tag ?>_stunden"
-                                            value="<?= e(number_format((float) $stunden, 2, '.', '')) ?>">
+                                        <input type="number" min="0" max="23" name="<?= $tag ?>_stunden_h"
+                                            value="<?= e((string) $stundenH) ?>" style="width:4rem">
+                                    </label>
+                                    <label class="inline-label">
+                                        <span>Minuten</span>
+                                        <input type="number" min="0" max="59" name="<?= $tag ?>_stunden_m"
+                                            value="<?= e((string) $stundenM) ?>" style="width:4rem">
                                     </label>
                                 </div>
 
@@ -552,8 +558,12 @@ function typVorbelegung(?array $aktuellerBericht, ?array $vorwochenBericht, stri
                     </div>
 
                     <div class="week-summary">
-                        Gesamtstunden in dieser Woche:
-                        <strong><?= $aktuellerBericht ? number_format(sumStunden($aktuellerBericht), 1, ',', '.') : '0,0' ?></strong>
+                        <?php
+                        $gesamtFloat = $aktuellerBericht ? sumStunden($aktuellerBericht) : 0.0;
+                        [$gsH, $gsM] = floatToHM($gesamtFloat);
+                        ?>
+                        Gesamtzeit in dieser Woche:
+                        <strong><?= $aktuellerBericht ? e("{$gsH}:{$gsM} h") : '0:00 h' ?></strong>
                         <span class="hint">(wird nach dem Speichern aktualisiert)</span>
                     </div>
 

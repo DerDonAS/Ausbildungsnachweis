@@ -18,8 +18,35 @@ const APPROVAL_GROUP_ADMIN = 'admin';
 
 const WOCHENTAGE = ['montag', 'dienstag', 'mittwoch', 'donnerstag', 'freitag'];
 
-// Berufsschultage haben eine festgelegte Sollzeit von 7 Stunden 58 Minuten.
+// Tarifliche Sollzeit pro Tag: 39 h/Woche ÷ 5 Tage = 7 Stunden 48 Minuten.
+const TAGES_SOLLZEIT = (7 * 60 + 48) / 60;
+
+// Berufsschultage haben laut Schulordnung eine Sollzeit von 7 Stunden 58 Minuten.
 const SCHULE_STUNDEN = (7 * 60 + 58) / 60;
+
+/**
+ * Konvertiert einen Float-Stundenwert in [h, min].
+ * Beispiel: 7.9667 -> [7, 58]
+ */
+function floatToHM(float $stunden): array
+{
+    $h = (int) floor($stunden);
+    $m = (int) round(($stunden - $h) * 60);
+    if ($m === 60) {
+        $h++;
+        $m = 0;
+    }
+    return [$h, $m];
+}
+
+/**
+ * Kombiniert Stunden und Minuten zu einem Float.
+ * Beispiel: [7, 58] -> 7.9667
+ */
+function hmToFloat(int $h, int $m): float
+{
+    return max(0.0, min(24.0, $h + $m / 60));
+}
 
 const WOCHENTAG_LABELS = [
     'montag' => 'Montag',
@@ -396,13 +423,18 @@ function isValidIsoWeek(int $jahr, int $kw): bool
 /**
  * Normalisiert die Stunden eines Tages abhaengig vom Typ.
  * Abwesenheitstypen (Urlaub, Krank, Feiertag) haben keine Stunden.
- * Berufsschultage erhalten die Sollzeit SCHULE_STUNDEN (7:58 h), falls
- * der uebergebene Wert 0 ist (d. h. kein expliziter Nutzer-Override).
+ * Arbeits- und Berufsschultage erhalten die tarifliche Sollzeit (7:58 h),
+ * wenn der uebergebene Wert 0 ist (Formular-Fallback).
  */
 function normalizeTagesStunden(string $typ, float $stunden): float
 {
     if (in_array($typ, ['urlaub', 'krank', 'feiertag'], true)) {
         return 0.0;
+    }
+
+    if ($typ === 'arbeit') {
+        $wert = $stunden > 0 ? $stunden : TAGES_SOLLZEIT;
+        return min(24.0, max(0.0, $wert));
     }
 
     if ($typ === 'schule') {

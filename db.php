@@ -18,6 +18,9 @@ const APPROVAL_GROUP_ADMIN = 'admin';
 
 const WOCHENTAGE = ['montag', 'dienstag', 'mittwoch', 'donnerstag', 'freitag'];
 
+// Berufsschultage haben eine festgelegte Sollzeit von 7 Stunden 58 Minuten.
+const SCHULE_STUNDEN = (7 * 60 + 58) / 60;
+
 const WOCHENTAG_LABELS = [
     'montag' => 'Montag',
     'dienstag' => 'Dienstag',
@@ -392,13 +395,19 @@ function isValidIsoWeek(int $jahr, int $kw): bool
 
 /**
  * Normalisiert die Stunden eines Tages abhaengig vom Typ.
- * Abwesenheitstypen (Urlaub, Krank, Feiertag) haben keine Arbeitsstunden,
- * Berufsschule wird ebenfalls nicht als Arbeitszeit gezaehlt.
+ * Abwesenheitstypen (Urlaub, Krank, Feiertag) haben keine Stunden.
+ * Berufsschultage erhalten die Sollzeit SCHULE_STUNDEN (7:58 h), falls
+ * der uebergebene Wert 0 ist (d. h. kein expliziter Nutzer-Override).
  */
 function normalizeTagesStunden(string $typ, float $stunden): float
 {
-    if (in_array($typ, ['urlaub', 'krank', 'feiertag', 'schule'], true)) {
+    if (in_array($typ, ['urlaub', 'krank', 'feiertag'], true)) {
         return 0.0;
+    }
+
+    if ($typ === 'schule') {
+        $wert = $stunden > 0 ? $stunden : SCHULE_STUNDEN;
+        return min(24.0, max(0.0, $wert));
     }
 
     if ($stunden < 0) {

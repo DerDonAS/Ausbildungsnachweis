@@ -87,8 +87,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $stundenRoh = str_replace(',', '.', (string) ($_POST[$tag . '_stunden'] ?? '8'));
             $stunden = is_numeric($stundenRoh) ? (float) $stundenRoh : 0.0;
-            // Bei Abwesenheit/Berufsschule werden keine Arbeitsstunden gezaehlt;
-            // ansonsten auf den Bereich 0..24 begrenzen.
             $stunden = normalizeTagesStunden($typ, $stunden);
 
             // Bei Urlaub/Krank/Feiertag ergeben Tätigkeiten keinen Sinn,
@@ -519,7 +517,8 @@ function typVorbelegung(?array $aktuellerBericht, ?array $vorwochenBericht, stri
                         <?php foreach (WOCHENTAGE as $tag):
                             $datum = $weekRange['montag']->modify('+' . array_search($tag, WOCHENTAGE) . ' days');
                             $typ = typVorbelegung($aktuellerBericht, $vorwochenBericht, $tag, $festeSchultagListe);
-                            $stunden = feldWert($aktuellerBericht, $tag, 'stunden', 0);
+                            $stundenDefault = $typ === 'schule' ? SCHULE_STUNDEN : 0;
+                            $stunden = feldWert($aktuellerBericht, $tag, 'stunden', $stundenDefault);
                             $taetigkeiten = feldWert($aktuellerBericht, $tag, 'taetigkeiten', '');
                             ?>
                             <fieldset class="day-block" <?= $istGesperrt ? 'disabled' : '' ?>>
@@ -538,8 +537,8 @@ function typVorbelegung(?array $aktuellerBericht, ?array $vorwochenBericht, stri
                                     </label>
                                     <label class="inline-label">
                                         <span>Stunden</span>
-                                        <input type="number" step="0.25" min="0" max="24" name="<?= $tag ?>_stunden"
-                                            value="<?= e((string) $stunden) ?>">
+                                        <input type="number" step="0.01" min="0" max="24" name="<?= $tag ?>_stunden"
+                                            value="<?= e(number_format((float) $stunden, 2, '.', '')) ?>">
                                     </label>
                                 </div>
 

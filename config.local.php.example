@@ -1,0 +1,17 @@
+<?php
+/**
+ * Lokale Entwicklungskonfiguration.
+ *
+ * Diese Datei als config.local.php kopieren und anpassen.
+ * config.local.php ist in .gitignore eingetragen und landet nie auf GitHub.
+ *
+ * Verwendung:
+ *   cp config.local.php.example config.local.php
+ */
+
+// Simuliert die Windows-Anmeldung fuer lokale Tests (z. B. VS Code PHP Server).
+// Auf dem Produktivserver NICHT anlegen.
+putenv('AUSBILDUNG_DEV_USER=GI7LBV5');
+
+// Kommagetrennte Liste von Kennungen mit Admin-Rechten.
+putenv('AUSBILDUNG_ADMIN_USERS=GI7LBV5');

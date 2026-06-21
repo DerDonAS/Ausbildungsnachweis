@@ -1,6 +1,10 @@
 <?php
 declare(strict_types=1);
 
+if (file_exists(__DIR__ . '/config.local.php')) {
+    require_once __DIR__ . '/config.local.php';
+}
+
 /**
  * ldap.php
  * LDAP-Anbindung an das DirX-Verzeichnis des LBV NRW zur Vorbelegung

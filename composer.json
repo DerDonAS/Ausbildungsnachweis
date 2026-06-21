@@ -1,0 +1,15 @@
+{
+    "name": "lbv-nrw/ausbildungsnachweis",
+    "description": "Webtool für Ausbildungsnachweise der Fachinformatiker beim LBV NRW",
+    "type": "project",
+    "license": "proprietary",
+    "require": {
+        "php": ">=8.1"
+    },
+    "require-dev": {
+        "phpstan/phpstan": "^1.12"
+    },
+    "config": {
+        "optimize-autoloader": true
+    }
+}

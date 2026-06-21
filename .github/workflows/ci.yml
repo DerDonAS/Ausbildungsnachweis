@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+jobs:
+  lint:
+    name: PHP Lint & Static Analysis
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: PHP einrichten
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.2"
+          extensions: ldap, pdo, pdo_sqlite
+          tools: composer
+
+      - name: Composer-Abhängigkeiten installieren
+        run: composer install --no-interaction --prefer-dist --no-progress
+        # Nur noetig sobald composer.json vorhanden ist;
+        # schlaegt fehl wenn keine composer.json existiert – dann bitte
+        # "if: hashFiles('composer.json') != ''" als Bedingung ergaenzen.
+
+      - name: PHP-Syntax prüfen (php -l)
+        run: |
+          find . -name "*.php" \
+            ! -path "./vendor/*" \
+            ! -path "./.github/*" \
+            -print0 \
+          | xargs -0 -n1 php -l
+
+      - name: PHPStan – statische Analyse
+        run: vendor/bin/phpstan analyse --no-progress
+        # Konfiguration liegt in phpstan.neon (siehe Repository-Root).

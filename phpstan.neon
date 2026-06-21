@@ -1,0 +1,10 @@
+parameters:
+    level: 5
+    paths:
+        - .
+    excludePaths:
+        - vendor
+    # Globale Funktionen aus db.php / helpers.php / ldap.php werden
+    # dateiuebergreifend genutzt; PHPStan analysiert sie im Kontext
+    # der einbindenden Datei automatisch mit.
+    reportUnmatchedIgnoredErrors: false

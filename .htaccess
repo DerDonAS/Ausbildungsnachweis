@@ -1,0 +1,7 @@
+# Apache: Zugriff auf die SQLite-Datenbank ueber HTTP komplett verbieten.
+# Defense-in-depth, falls der data/-Ordner doch im Web-Root liegt.
+Require all denied
+<IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+</IfModule>
